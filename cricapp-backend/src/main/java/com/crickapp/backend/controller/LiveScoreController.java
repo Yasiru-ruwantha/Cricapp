@@ -25,6 +25,12 @@ public class LiveScoreController {
         return scoringEngineService.generateScorecard(match);
     }
 
+    @GetMapping("/{id}/full-scorecard")
+    public com.crickapp.backend.dto.FullScorecardDTO getFullScorecard(@PathVariable Long id) {
+        Match match = matchRepository.findById(id).orElseThrow(() -> new RuntimeException("Match not found"));
+        return scoringEngineService.generateFullScorecard(match);
+    }
+
     @PostMapping("/{id}/ball")
     public MatchScorecardDTO recordBall(@PathVariable Long id, @RequestBody BallRequestDTO request) {
         request.setMatchId(id);
