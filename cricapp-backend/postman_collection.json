@@ -1,0 +1,429 @@
+{
+	"info": {
+		"_postman_id": "cricapp-team-management-v1",
+		"name": "cricApp - Team Management API",
+		"description": "Collection for testing cricket team management endpoints including public discovery, squad management, leadership assignment, logo upload, and business rules.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Public Endpoints",
+			"item": [
+				{
+					"name": "List All Teams",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/teams",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "teams"]
+						},
+						"description": "Returns a summary list of all teams (id, name, logoUrl, captainName, playerCount)."
+					}
+				},
+				{
+					"name": "Search Teams by Name",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/teams?search=Royal",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "teams"],
+							"query": [
+								{
+									"key": "search",
+									"value": "Royal"
+								}
+							]
+						},
+						"description": "Performs case-insensitive partial match search on team name."
+					}
+				},
+				{
+					"name": "Get Team by ID (With Squad)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/teams/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "teams", "1"]
+						},
+						"description": "Returns full details for a team, including its list of squad players."
+					}
+				},
+				{
+					"name": "Get Unassigned Players",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/players?unassigned=true",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "players"],
+							"query": [
+								{
+									"key": "unassigned",
+									"value": "true"
+								}
+							]
+						},
+						"description": "Used by the frontend 'Add Player' dialog to fetch players without a team."
+					}
+				},
+				{
+					"name": "Search Players by Name",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/players?search=Virat",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "players"],
+							"query": [
+								{
+									"key": "search",
+									"value": "Virat"
+								}
+							]
+						},
+						"description": "Searches all players by name."
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Team Management (Protected)",
+			"item": [
+				{
+					"name": "Create Team",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Dev-Role",
+								"value": "ADMIN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Gujarat Titans\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/teams",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "teams"]
+						},
+						"description": "Requires ADMIN or ORGANIZER role. Returns 201 Created."
+					}
+				},
+				{
+					"name": "Update Team Name",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "X-Dev-Role",
+								"value": "ORGANIZER",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Royal Challengers Bengaluru\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/teams/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "teams", "1"]
+						},
+						"description": "Updates team name with case-insensitive uniqueness check."
+					}
+				},
+				{
+					"name": "Add Player to Squad",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Dev-Role",
+								"value": "ORGANIZER",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"playerId\": 25\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/teams/1/players",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "teams", "1", "players"]
+						},
+						"description": "Adds an unassigned player (e.g., Ben Stokes id 25) to team 1."
+					}
+				},
+				{
+					"name": "Set Leadership (Captain & Vice-Captain)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "X-Dev-Role",
+								"value": "ADMIN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"captainId\": 1,\n    \"viceCaptainId\": 2\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/teams/1/leadership",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "teams", "1", "leadership"]
+						},
+						"description": "Sets captain (Virat Kohli) and vice-captain (Faf du Plessis). Pass null to clear."
+					}
+				},
+				{
+					"name": "Remove Player from Squad",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "X-Dev-Role",
+								"value": "ORGANIZER",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/teams/1/players/25",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "teams", "1", "players", "25"]
+						},
+						"description": "Removes player from squad. If player was captain or vice-captain, clears that role automatically."
+					}
+				},
+				{
+					"name": "Upload Team Logo",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Dev-Role",
+								"value": "ADMIN",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/teams/1/logo",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "teams", "1", "logo"]
+						},
+						"description": "Multipart form-data upload with field 'file'. Accepts PNG, JPG/JPEG up to 2MB."
+					}
+				},
+				{
+					"name": "Delete Team",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "X-Dev-Role",
+								"value": "ADMIN",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/teams/2",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "teams", "2"]
+						},
+						"description": "Requires ADMIN role. Unassigns players (team = null), deletes logo file, and deletes team. Returns 204 No Content."
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Business Rule & Error Validations",
+			"item": [
+				{
+					"name": "Error 409 - Duplicate Team Name",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Dev-Role",
+								"value": "ADMIN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Royal Challengers\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/teams",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "teams"]
+						},
+						"description": "Expects 409 Conflict because team name must be unique."
+					}
+				},
+				{
+					"name": "Error 400 - Validation Error (Name too short)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Dev-Role",
+								"value": "ADMIN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"AB\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/teams",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "teams"]
+						},
+						"description": "Expects 400 Bad Request with fieldErrors detailing min size is 3."
+					}
+				},
+				{
+					"name": "Error 409 - Player Already Has Team",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Dev-Role",
+								"value": "ADMIN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"playerId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/teams/3/players",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "teams", "3", "players"]
+						},
+						"description": "Player 1 (Virat Kohli) already belongs to RCB. Expects 409 Conflict."
+					}
+				},
+				{
+					"name": "Error 400 - Captain Equals Vice-Captain",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "X-Dev-Role",
+								"value": "ADMIN",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"captainId\": 1,\n    \"viceCaptainId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/teams/1/leadership",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "teams", "1", "leadership"]
+						},
+						"description": "Expects 400 Bad Request because captain and vice-captain cannot be the same player."
+					}
+				},
+				{
+					"name": "Error 403 - Missing Authorization Header",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Unauthorized Team\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/teams",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "teams"]
+						},
+						"description": "No X-Dev-Role header provided. Expects 403 Forbidden."
+					}
+				}
+			]
+		}
+	]
+}
