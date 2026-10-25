@@ -1,58 +1,54 @@
 package com.crickapp.backend.controller;
 
+import com.crickapp.backend.dto.PlayerResponse;
 import com.crickapp.backend.model.Player;
-import com.crickapp.backend.model.Team;
 import com.crickapp.backend.repository.PlayerRepository;
-import com.crickapp.backend.repository.TeamRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api")
-@CrossOrigin(origins = "*")
+@RequestMapping("/api/players")
+@Tag(name = "Player Management (Minimal)", description = "Minimal endpoint to search and fetch unassigned players")
 public class PlayerController {
 
-    @Autowired
-    private PlayerRepository playerRepository;
+    private final PlayerRepository playerRepository;
 
-    @Autowired
-    private TeamRepository teamRepository;
-
-    @GetMapping("/players")
-    public List<Player> getAllPlayers() {
-        return playerRepository.findAll();
+    public PlayerController(PlayerRepository playerRepository) {
+        this.playerRepository = playerRepository;
     }
 
-    @PostMapping("/players")
-    public Player createPlayer(@RequestBody Player player) {
-        return playerRepository.save(player);
-    }
+    @GetMapping
+    @Operation(summary = "Search players with filter for unassigned players")
+    public ResponseEntity<List<PlayerResponse>> getPlayers(
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "unassigned", required = false, defaultValue = "false") boolean unassigned
+    ) {
+        List<Player> players;
+        boolean hasSearch = StringUtils.hasText(search);
 
-    @PostMapping("/teams/{teamId}/players")
-    public Player addPlayerToTeam(@PathVariable Long teamId, @RequestBody Player playerRequest) {
-        // If the player already has an ID, they exist in the DB. Otherwise, it's a new player.
-        Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new RuntimeException("Team not found"));
-        
-        team.getPlayers().add(playerRequest);
-        teamRepository.save(team);
-        
-        return team.getPlayers().get(team.getPlayers().size() - 1);
-    }
+        if (unassigned) {
+            if (hasSearch) {
+                players = playerRepository.findByTeamIsNullAndNameContainingIgnoreCaseOrderByNameAsc(search.trim());
+            } else {
+                players = playerRepository.findByTeamIsNullOrderByNameAsc();
+            }
+        } else {
+            if (hasSearch) {
+                players = playerRepository.findByNameContainingIgnoreCaseOrderByNameAsc(search.trim());
+            } else {
+                players = playerRepository.findAllByOrderByNameAsc();
+            }
+        }
 
-    @PutMapping("/teams/{teamId}/players/{playerId}")
-    public Player assignExistingPlayerToTeam(@PathVariable Long teamId, @PathVariable Long playerId) {
-        Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new RuntimeException("Team not found"));
-        
-        Player player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new RuntimeException("Player not found"));
-        
-        team.getPlayers().add(player);
-        teamRepository.save(team);
-        
-        return player;
+        List<PlayerResponse> response = players.stream()
+                .map(p -> new PlayerResponse(p.getId(), p.getName(), p.getRole(), p.getAge()))
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 }
