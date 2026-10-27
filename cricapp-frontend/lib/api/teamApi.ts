@@ -39,6 +39,14 @@ export interface TeamResponse {
 
 export interface TeamRequest {
   name: string;
+  logoUrl?: string | null;
+}
+
+export interface CreatePlayerRequest {
+  name: string;
+  role: PlayerRole;
+  age?: number;
+  teamId?: number;
 }
 
 export interface AddPlayerRequest {
@@ -86,18 +94,28 @@ export async function getTeamById(id: number): Promise<TeamResponse> {
 }
 
 /**
- * Create a new cricket team
+ * Create a new cricket team with optional logo URL
  */
-export async function createTeam(name: string): Promise<TeamResponse> {
-  const response = await apiClient.post<TeamResponse>('/teams', { name });
+export async function createTeam(name: string, logoUrl?: string | null): Promise<TeamResponse> {
+  const response = await apiClient.post<TeamResponse>('/teams', { name, logoUrl: logoUrl || null });
   return response.data;
 }
 
 /**
- * Update team name
+ * Update team name and optional logo URL
  */
-export async function updateTeamName(id: number, name: string): Promise<TeamResponse> {
-  const response = await apiClient.put<TeamResponse>(`/teams/${id}`, { name });
+export async function updateTeam(id: number, name: string, logoUrl?: string | null): Promise<TeamResponse> {
+  const response = await apiClient.put<TeamResponse>(`/teams/${id}`, { name, logoUrl: logoUrl || null });
+  return response.data;
+}
+
+export const updateTeamName = updateTeam;
+
+/**
+ * Create a new player in database and optionally assign to a team
+ */
+export async function createPlayer(data: CreatePlayerRequest): Promise<PlayerResponse> {
+  const response = await apiClient.post<PlayerResponse>('/players', data);
   return response.data;
 }
 

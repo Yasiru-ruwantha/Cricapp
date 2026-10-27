@@ -4,14 +4,16 @@ import {
   getTeams,
   getTeamById,
   createTeam,
-  updateTeamName,
+  updateTeam,
   deleteTeam,
   addPlayerToTeam,
   removePlayerFromTeam,
   setLeadership,
   getUnassignedPlayers,
+  createPlayer,
   getLogoUrl,
   TeamResponse,
+  PlayerRole,
 } from "@/lib/api/teamApi";
 
 interface TeamStore {
@@ -21,7 +23,7 @@ interface TeamStore {
   addTeam: (team: Omit<Team, "id" | "players">) => Promise<void>;
   updateTeam: (id: number, team: Partial<Team>) => Promise<void>;
   deleteTeam: (id: number) => Promise<void>;
-  addPlayer: (teamId: number, player: Omit<Player, "id">) => Promise<void>;
+  addPlayer: (teamId: number, player: { name: string; role?: Role; skillRole?: PlayerRole; age?: number; id?: number }) => Promise<void>;
   removePlayer: (teamId: number, playerId: number) => Promise<void>;
   changePlayerRole: (teamId: number, playerId: number, role: Role) => Promise<void>;
 }
@@ -42,6 +44,8 @@ function mapBackendTeamToStoreTeam(backendTeam: TeamResponse): Team {
         id: p.id,
         name: p.name,
         role: role,
+        skillRole: p.role,
+        age: p.age,
       };
     }),
   };
@@ -70,7 +74,7 @@ export const useTeamStore = create<TeamStore>((set, get) => ({
 
   addTeam: async (team) => {
     try {
-      const created = await createTeam(team.name);
+      const created = await createTeam(team.name, team.logoUrl);
       const mapped = mapBackendTeamToStoreTeam(created);
       set((state) => ({ teams: [...state.teams, mapped] }));
     } catch (err) {
@@ -81,11 +85,13 @@ export const useTeamStore = create<TeamStore>((set, get) => ({
 
   updateTeam: async (id, updated) => {
     try {
-      if (updated.name) {
-        await updateTeamName(id, updated.name);
-      }
+      const currentTeam = get().teams.find((t) => t.id === id);
+      const name = updated.name ?? currentTeam?.name ?? "";
+      const logoUrl = updated.logoUrl !== undefined ? updated.logoUrl : (currentTeam?.logoUrl ?? null);
+      const updatedBackend = await updateTeam(id, name, logoUrl);
+      const mapped = mapBackendTeamToStoreTeam(updatedBackend);
       set((state) => ({
-        teams: state.teams.map((t) => (t.id === id ? { ...t, ...updated } : t)),
+        teams: state.teams.map((t) => (t.id === id ? mapped : t)),
       }));
     } catch (err) {
       console.error("Failed to update team via API:", err);
@@ -107,16 +113,40 @@ export const useTeamStore = create<TeamStore>((set, get) => ({
 
   addPlayer: async (teamId, player) => {
     try {
+      // 1. If player already has an ID (picked from unassigned list), assign directly
+      if (player.id) {
+        const updated = await addPlayerToTeam(teamId, player.id);
+        const mapped = mapBackendTeamToStoreTeam(updated);
+        set((state) => ({
+          teams: state.teams.map((t) => (t.id === teamId ? mapped : t)),
+        }));
+        return;
+      }
+
+      // 2. Search unassigned players by name
       const unassigned = await getUnassignedPlayers();
-      let targetPlayer = unassigned.find(
+      const existing = unassigned.find(
         (p) => p.name.trim().toLowerCase() === player.name.trim().toLowerCase()
       );
-      if (!targetPlayer && unassigned.length > 0) {
-        targetPlayer = unassigned[0];
-      }
-      if (targetPlayer) {
-        const updated = await addPlayerToTeam(teamId, targetPlayer.id);
+
+      if (existing) {
+        const updated = await addPlayerToTeam(teamId, existing.id);
         const mapped = mapBackendTeamToStoreTeam(updated);
+        set((state) => ({
+          teams: state.teams.map((t) => (t.id === teamId ? mapped : t)),
+        }));
+      } else {
+        // 3. Create new player record in database assigned to this team
+        await createPlayer({
+          name: player.name.trim(),
+          role: (player.skillRole as PlayerRole) || 'BATSMAN',
+          age: player.age || 25,
+          teamId: teamId,
+        });
+
+        // 4. Reload full team from DB
+        const refreshed = await getTeamById(teamId);
+        const mapped = mapBackendTeamToStoreTeam(refreshed);
         set((state) => ({
           teams: state.teams.map((t) => (t.id === teamId ? mapped : t)),
         }));

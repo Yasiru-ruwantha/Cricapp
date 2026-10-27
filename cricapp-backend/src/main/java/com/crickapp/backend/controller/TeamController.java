@@ -47,7 +47,7 @@ public class TeamController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
-    @Operation(summary = "Update team name")
+    @Operation(summary = "Update team name and logo")
     public ResponseEntity<TeamResponse> updateTeamName(@PathVariable Long id, @Valid @RequestBody TeamRequest request) {
         return ResponseEntity.ok(teamService.updateTeamName(id, request));
     }

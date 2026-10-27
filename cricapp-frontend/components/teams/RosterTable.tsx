@@ -37,7 +37,14 @@ export function RosterTable({ players, isAdmin, onRemovePlayer, onChangeRole }: 
             ) : (
               players.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50/50">
-                  <td className="p-4 font-medium">{p.name}</td>
+                  <td className="p-4">
+                    <span className="font-medium text-slate-900">{p.name}</span>
+                    {p.skillRole && (
+                      <span className="block text-xs text-slate-400 capitalize">
+                        {p.skillRole.replace('_', ' ').toLowerCase()}{p.age ? ` · ${p.age} yrs` : ''}
+                      </span>
+                    )}
+                  </td>
                   <td className="p-4">
                     <RoleBadge role={p.role} />
                   </td>
