@@ -1,28 +1,29 @@
 package com.crickapp.backend.config;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
 
 @Configuration
 public class JwtDecoderConfig {
 
+    @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:https://jkdahlkcgjyiqnodvbix.supabase.co/auth/v1/.well-known/jwks.json}")
+    private String jwkSetUri;
+
     /**
-     * If SUPABASE_JWT_SECRET is specified in environment or .env, decode JWT using HMAC-SHA256.
-     * Otherwise, Spring Boot automatically decodes via the jwk-set-uri configured in application.yml.
+     * Supabase uses ES256 (Elliptic Curve P-256) or RS256 for signing tokens.
+     * By default, Nimbus only enables RS256, so we explicitly register ES256 & RS256.
      */
     @Bean
-    @ConditionalOnExpression("!'${supabase.jwt.secret:}'.trim().isEmpty()")
-    public JwtDecoder jwtDecoderBySecret(@Value("${supabase.jwt.secret}") String secret) {
-        SecretKey key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
-        return NimbusJwtDecoder.withSecretKey(key).build();
+    public JwtDecoder jwtDecoder() {
+        return NimbusJwtDecoder.withJwkSetUri(jwkSetUri)
+                .jwsAlgorithms(algs -> {
+                    algs.add(SignatureAlgorithm.ES256);
+                    algs.add(SignatureAlgorithm.RS256);
+                })
+                .build();
     }
 }
-
