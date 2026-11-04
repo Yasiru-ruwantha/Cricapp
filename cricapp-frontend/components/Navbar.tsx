@@ -35,6 +35,9 @@ export function Navbar() {
       <div className="flex items-center gap-6 text-sm font-bold font-manrope text-gray-900">
         {/* Navigation Links */}
         <div className="hidden lg:flex items-center gap-6">
+          <Link href="/teams" className="hover:text-emerald-600 transition-colors">
+            Teams
+          </Link>
           <Link href="#" className="flex items-center gap-1 hover:text-emerald-600 transition-colors">
             Live scores <ChevronDown className="h-4 w-4 text-gray-900" />
           </Link>

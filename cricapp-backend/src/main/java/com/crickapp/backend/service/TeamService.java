@@ -86,8 +86,14 @@ public class TeamService {
             throw new ResourceConflictException("Team with name '" + trimmedName + "' already exists");
         }
 
+        String logoUrl = null;
+        if (request.logoUrl() != null && !request.logoUrl().isBlank()) {
+            logoUrl = request.logoUrl().trim();
+        }
+
         Team team = Team.builder()
                 .name(trimmedName)
+                .logoUrl(logoUrl)
                 .players(new ArrayList<>())
                 .build();
 
@@ -96,16 +102,16 @@ public class TeamService {
     }
 
     /**
-     * Updates team name with unique case-insensitive name check excluding current team.
+     * Updates team name and optional logo URL with unique case-insensitive name check excluding current team.
      *
      * @param id team ID
-     * @param request update request containing new team name
+     * @param request update request containing new team name and optional logo URL
      * @return updated TeamResponse
      * @throws ResourceNotFoundException if team does not exist
      * @throws ResourceConflictException if new name belongs to another team
      */
     @Transactional
-    public TeamResponse updateTeamName(Long id, TeamRequest request) {
+    public TeamResponse updateTeam(Long id, TeamRequest request) {
         Team team = teamRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Team not found with id: " + id));
 
@@ -115,8 +121,16 @@ public class TeamService {
         }
 
         team.setName(trimmedName);
+        if (request.logoUrl() != null) {
+            team.setLogoUrl(request.logoUrl().trim().isEmpty() ? null : request.logoUrl().trim());
+        }
         Team saved = teamRepository.save(team);
         return mapToTeamResponse(saved);
+    }
+
+    @Transactional
+    public TeamResponse updateTeamName(Long id, TeamRequest request) {
+        return updateTeam(id, request);
     }
 
     /**

@@ -48,6 +48,8 @@ export function TeamForm({ teamId }: TeamFormProps) {
   }, [existingTeam, reset]);
 
   const logoUrlValue = watch("logoUrl");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
 
   if (!isHydrated) {
     return <div className="p-8 text-center text-slate-500 animate-pulse">Loading form...</div>;
@@ -62,13 +64,22 @@ export function TeamForm({ teamId }: TeamFormProps) {
     );
   }
 
-  const onSubmit = (data: FormData) => {
-    if (isEditing) {
-      updateTeam(teamId!, { name: data.name, logoUrl: data.logoUrl || undefined });
-      router.push(`/teams/${teamId}`);
-    } else {
-      addTeam({ name: data.name, logoUrl: data.logoUrl || undefined });
-      router.push('/teams');
+  const onSubmit = async (data: FormData) => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      if (isEditing) {
+        await updateTeam(teamId!, { name: data.name, logoUrl: data.logoUrl || undefined });
+        router.push(`/teams/${teamId}`);
+      } else {
+        await addTeam({ name: data.name, logoUrl: data.logoUrl || undefined });
+        router.push('/teams');
+      }
+    } catch (err: any) {
+      console.error("Team form submission failed:", err);
+      const msg = err?.response?.data?.message || err?.message || "Failed to save team. Please try again.";
+      setSubmitError(msg);
+      setIsSubmitting(false);
     }
   };
 
@@ -82,6 +93,12 @@ export function TeamForm({ teamId }: TeamFormProps) {
         <h1 className="text-2xl font-bold text-slate-900 mb-6">
           {isEditing ? `Edit Team` : 'Create New Team'}
         </h1>
+
+        {submitError && (
+          <div className="mb-5 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+            {submitError}
+          </div>
+        )}
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div>
@@ -89,7 +106,8 @@ export function TeamForm({ teamId }: TeamFormProps) {
             <input 
               {...register("name")}
               type="text" 
-              className={`w-full border rounded-lg p-2.5 focus:outline-none focus:ring-2 ${errors.name ? 'border-red-300 focus:ring-red-500' : 'border-slate-300 focus:ring-blue-500'}`} 
+              disabled={isSubmitting}
+              className={`w-full border rounded-lg p-2.5 focus:outline-none focus:ring-2 ${errors.name ? 'border-red-300 focus:ring-red-500' : 'border-slate-300 focus:ring-blue-500'} disabled:bg-slate-50 disabled:text-slate-500`} 
               placeholder="Enter team name" 
             />
             {errors.name && <p className="text-red-500 text-xs mt-1.5">{errors.name.message}</p>}
@@ -100,7 +118,8 @@ export function TeamForm({ teamId }: TeamFormProps) {
             <input 
               {...register("logoUrl")}
               type="text" 
-              className={`w-full border rounded-lg p-2.5 focus:outline-none focus:ring-2 ${errors.logoUrl ? 'border-red-300 focus:ring-red-500' : 'border-slate-300 focus:ring-blue-500'}`} 
+              disabled={isSubmitting}
+              className={`w-full border rounded-lg p-2.5 focus:outline-none focus:ring-2 ${errors.logoUrl ? 'border-red-300 focus:ring-red-500' : 'border-slate-300 focus:ring-blue-500'} disabled:bg-slate-50 disabled:text-slate-500`} 
               placeholder="https://example.com/logo.png" 
             />
             {errors.logoUrl && <p className="text-red-500 text-xs mt-1.5">{errors.logoUrl.message}</p>}
@@ -124,9 +143,17 @@ export function TeamForm({ teamId }: TeamFormProps) {
             </Link>
             <button 
               type="submit" 
-              className="px-4 py-2 text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              disabled={isSubmitting}
+              className="px-4 py-2 text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 transition-colors flex items-center gap-2"
             >
-              {isEditing ? 'Save Changes' : 'Create Team'}
+              {isSubmitting ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                isEditing ? 'Save Changes' : 'Create Team'
+              )}
             </button>
           </div>
         </form>

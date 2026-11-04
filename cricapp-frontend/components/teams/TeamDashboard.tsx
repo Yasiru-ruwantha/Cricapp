@@ -45,20 +45,26 @@ export function TeamDashboard({ teamId }: TeamDashboardProps) {
     );
   }
 
-  const handleDeleteTeam = () => {
-    deleteTeam(teamId);
-    router.push('/teams');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteTeam = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteTeam(teamId);
+      router.push('/teams');
+    } catch (err) {
+      console.error("Failed to delete team:", err);
+      setIsDeleting(false);
+      setShowDeleteTeam(false);
+    }
   };
 
-  const handleRoleChange = (playerId: number, newRole: Role) => {
-    if (newRole !== "PLAYER") {
-      // Ensure captain/vice-captain are unique
-      const existing = team.players.find(p => p.role === newRole);
-      if (existing) {
-        changePlayerRole(team.id, existing.id, "PLAYER");
-      }
+  const handleRoleChange = async (playerId: number, newRole: Role) => {
+    try {
+      await changePlayerRole(team.id, playerId, newRole);
+    } catch (err) {
+      console.error("Failed to change player role:", err);
     }
-    changePlayerRole(team.id, playerId, newRole);
   };
 
   return (
@@ -125,7 +131,7 @@ export function TeamDashboard({ teamId }: TeamDashboardProps) {
       <AddPlayerDialog
         isOpen={showAddPlayer}
         onClose={() => setShowAddPlayer(false)}
-        onAdd={(name) => addPlayer(team.id, { name, role: "PLAYER" })}
+        onAdd={(playerData) => addPlayer(team.id, playerData)}
       />
     </div>
   );

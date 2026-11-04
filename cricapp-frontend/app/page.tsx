@@ -112,16 +112,19 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Feature 2 */}
-            <div className="bg-white dark:bg-slate-900 p-8  border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400 rounded-xl flex items-center justify-center mb-6">
-                <Trophy className="w-6 h-6" />
+            {/* Feature 2: Team Management */}
+            <Link href="/teams" className="group block bg-white dark:bg-slate-900 p-8 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg hover:border-emerald-500/50 transition-all">
+              <div className="w-12 h-12 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                <Users className="w-6 h-6" />
               </div>
-              <h3 className="text-l font-bold text-slate-900 font-manrope dark:text-white mb-3">Tournament Management</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-l font-bold text-slate-900 font-manrope dark:text-white mb-3 group-hover:text-emerald-600 transition-colors">Team Management</h3>
+                <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all -mt-3" />
+              </div>
               <p className="text-slate-600 text-sm dark:text-slate-400 font-manrope">
-                Create tournaments, manage teams, fixtures and monitor overall competition progress seamlessly.
+                Build cricket squads, assign captains and vice-captains, upload team logos, and manage player transfers.
               </p>
-            </div>
+            </Link>
 
             {/* Feature 3 */}
             <div className="bg-white dark:bg-slate-900 p-8  border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">

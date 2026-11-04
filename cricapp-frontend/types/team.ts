@@ -4,6 +4,8 @@ export interface Player {
   id: number;
   name: string;
   role: Role;
+  skillRole?: string;
+  age?: number;
 }
 
 export interface Team {
