@@ -5,6 +5,12 @@ spring:
     default: dev
   config:
     import: "optional:file:.env[.properties]"
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${SUPABASE_JWK_SET_URI:https://jkdahlkcgjyiqnodvbix.supabase.co/auth/v1/.well-known/jwks.json}
+          issuer-uri: ${SUPABASE_ISSUER_URI:https://jkdahlkcgjyiqnodvbix.supabase.co/auth/v1}
   datasource:
     url: ${DB_URL:jdbc:postgresql://aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres?prepareThreshold=0}
     username: ${DB_USER:postgres.jkdahlkcgjyiqnodvbix}
@@ -22,6 +28,10 @@ spring:
     multipart:
       max-file-size: 2MB
       max-request-size: 2MB
+
+supabase:
+  jwt:
+    secret: ${SUPABASE_JWT_SECRET:}
 
 springdoc:
   swagger-ui:
