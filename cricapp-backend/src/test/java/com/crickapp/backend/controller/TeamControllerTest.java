@@ -1,5 +1,6 @@
 package com.crickapp.backend.controller;
 
+import com.crickapp.backend.config.TeamSecurity;
 import com.crickapp.backend.dto.TeamRequest;
 import com.crickapp.backend.dto.TeamResponse;
 import com.crickapp.backend.service.TeamService;
@@ -34,11 +35,14 @@ class TeamControllerTest {
     @MockBean
     private TeamService teamService;
 
+    @MockBean
+    private TeamSecurity teamSecurity;
+
     @Test
     @DisplayName("POST /api/teams creates a new team and returns 201 Created")
     void createTeam_success_returnsCreated() throws Exception {
         TeamRequest request = new TeamRequest("Delhi Capitals");
-        TeamResponse response = new TeamResponse(1L, "Delhi Capitals", null, null, null, List.of());
+        TeamResponse response = new TeamResponse(1L, "Delhi Capitals", null, null, null, List.of(), "test-user");
 
         when(teamService.createTeam(any(TeamRequest.class))).thenReturn(response);
 

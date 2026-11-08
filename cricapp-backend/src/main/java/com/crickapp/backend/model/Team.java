@@ -42,6 +42,9 @@ public class Team {
     @Builder.Default
     private List<Player> players = new ArrayList<>();
 
+    @Column(name = "created_by", updatable = false)
+    private String createdBy;
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -44,6 +44,7 @@ export interface TeamSummaryResponse {
   logoUrl: string | null;
   captainName: string | null;
   playerCount: number;
+  createdBy?: string | null;
 }
 
 export interface TeamResponse {
@@ -53,6 +54,7 @@ export interface TeamResponse {
   captainId: number | null;
   viceCaptainId: number | null;
   players: PlayerResponse[];
+  createdBy?: string | null;
 }
 
 export interface TeamRequest {

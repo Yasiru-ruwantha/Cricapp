@@ -3,11 +3,12 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTeamStore } from "@/lib/store/teamStore";
+import { useAuthStore } from "@/lib/store/useAuthStore";
 import { RosterTable } from "./RosterTable";
 import { LogoAvatar } from "./LogoAvatar";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { AddPlayerDialog } from "./AddPlayerDialog";
-import { ArrowLeft, UserPlus, Trash2, Edit2 } from "lucide-react";
+import { ArrowLeft, UserPlus, Trash2, Edit2, ShieldCheck } from "lucide-react";
 import { Role } from "@/types/team";
 
 interface TeamDashboardProps {
@@ -17,18 +18,22 @@ interface TeamDashboardProps {
 export function TeamDashboard({ teamId }: TeamDashboardProps) {
   const router = useRouter();
   const { teams, isHydrated, setHydrated, deleteTeam, removePlayer, changePlayerRole, addPlayer } = useTeamStore();
+  const { user, role } = useAuthStore();
   const [showDeleteTeam, setShowDeleteTeam] = useState(false);
   const [showAddPlayer, setShowAddPlayer] = useState(false);
-
-  // Mock roles as requested
-  const currentUserRole = "ADMIN"; 
-  const isAdmin = currentUserRole === "ADMIN" || currentUserRole === "ORGANIZER";
 
   useEffect(() => {
     setHydrated();
   }, [setHydrated]);
 
   const team = teams.find((t) => t.id === teamId);
+
+  // Ownership permission: only the team creator or system admin can edit team and roster
+  const isSystemAdmin = role === "ADMIN";
+  const isTeamCreator = Boolean(
+    user && team?.createdBy && (team.createdBy === user.id || team.createdBy === user.email)
+  );
+  const canEdit = isSystemAdmin || isTeamCreator || (!team?.createdBy && (role === "ORGANIZER" || isSystemAdmin));
 
   if (!isHydrated) {
     return <div className="p-8 text-center text-slate-500 animate-pulse">Loading dashboard...</div>;
@@ -77,11 +82,18 @@ export function TeamDashboard({ teamId }: TeamDashboardProps) {
         <div className="flex items-center gap-5">
           <LogoAvatar src={team.logoUrl} fallback={team.name} size={80} />
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">{team.name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold text-slate-900">{team.name}</h1>
+              {isTeamCreator && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <ShieldCheck size={12} /> Your Team
+                </span>
+              )}
+            </div>
             <p className="text-slate-500 mt-1">{team.players.length} Players in roster</p>
           </div>
         </div>
-        {isAdmin && (
+        {canEdit && (
           <div className="flex items-center gap-3">
             <Link 
               href={`/teams/${team.id}/edit`}
@@ -101,7 +113,7 @@ export function TeamDashboard({ teamId }: TeamDashboardProps) {
 
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-slate-900">Roster</h2>
-        {isAdmin && (
+        {canEdit && (
           <button 
             onClick={() => setShowAddPlayer(true)}
             className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-100 transition-colors"
@@ -113,7 +125,7 @@ export function TeamDashboard({ teamId }: TeamDashboardProps) {
 
       <RosterTable 
         players={team.players} 
-        isAdmin={isAdmin}
+        isAdmin={canEdit}
         onRemovePlayer={(playerId) => removePlayer(team.id, playerId)}
         onChangeRole={handleRoleChange}
       />

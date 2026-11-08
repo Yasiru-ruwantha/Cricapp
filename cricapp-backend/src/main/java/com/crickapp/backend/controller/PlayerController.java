@@ -1,5 +1,6 @@
 package com.crickapp.backend.controller;
 
+import com.crickapp.backend.config.TeamSecurity;
 import com.crickapp.backend.dto.CreatePlayerRequest;
 import com.crickapp.backend.dto.PlayerResponse;
 import com.crickapp.backend.exception.ResourceNotFoundException;
@@ -13,7 +14,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,10 +30,14 @@ public class PlayerController {
 
     private final PlayerRepository playerRepository;
     private final TeamRepository teamRepository;
+    private final TeamSecurity teamSecurity;
 
-    public PlayerController(PlayerRepository playerRepository, TeamRepository teamRepository) {
+    public PlayerController(PlayerRepository playerRepository,
+                            TeamRepository teamRepository,
+                            TeamSecurity teamSecurity) {
         this.playerRepository = playerRepository;
         this.teamRepository = teamRepository;
+        this.teamSecurity = teamSecurity;
     }
 
     @GetMapping
@@ -70,6 +78,11 @@ public class PlayerController {
         if (request.teamId() != null) {
             team = teamRepository.findById(request.teamId())
                     .orElseThrow(() -> new ResourceNotFoundException("Team not found with id: " + request.teamId()));
+
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (!teamSecurity.isOwnerOrAdmin(request.teamId(), authentication)) {
+                throw new AccessDeniedException("You do not have permission to assign players to this team. Only the team creator or an admin can manage team members.");
+            }
         }
 
         Player player = Player.builder()
@@ -87,4 +100,3 @@ public class PlayerController {
                 .body(new PlayerResponse(saved.getId(), saved.getName(), saved.getRole(), saved.getAge()));
     }
 }
-

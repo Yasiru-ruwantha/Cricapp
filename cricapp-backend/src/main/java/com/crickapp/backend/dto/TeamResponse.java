@@ -8,5 +8,10 @@ public record TeamResponse(
         String logoUrl,
         Long captainId,
         Long viceCaptainId,
-        List<PlayerResponse> players
-) {}
+        List<PlayerResponse> players,
+        String createdBy
+) {
+    public TeamResponse(Long id, String name, String logoUrl, Long captainId, Long viceCaptainId, List<PlayerResponse> players) {
+        this(id, name, logoUrl, captainId, viceCaptainId, players, null);
+    }
+}

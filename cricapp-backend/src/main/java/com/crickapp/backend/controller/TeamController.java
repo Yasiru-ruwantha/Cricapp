@@ -46,14 +46,14 @@ public class TeamController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    @PreAuthorize("@teamSecurity.isOwnerOrAdmin(#id, authentication)")
     @Operation(summary = "Update team name and logo")
     public ResponseEntity<TeamResponse> updateTeamName(@PathVariable Long id, @Valid @RequestBody TeamRequest request) {
         return ResponseEntity.ok(teamService.updateTeamName(id, request));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("@teamSecurity.isOwnerOrAdmin(#id, authentication)")
     @Operation(summary = "Delete team and unassign squad players")
     public ResponseEntity<Void> deleteTeam(@PathVariable Long id) {
         teamService.deleteTeam(id);
@@ -61,28 +61,28 @@ public class TeamController {
     }
 
     @PostMapping(value = "/{id}/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    @PreAuthorize("@teamSecurity.isOwnerOrAdmin(#id, authentication)")
     @Operation(summary = "Upload team logo (PNG, JPG/JPEG up to 2MB)")
     public ResponseEntity<TeamResponse> uploadLogo(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(teamService.uploadLogo(id, file));
     }
 
     @PostMapping("/{id}/players")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    @PreAuthorize("@teamSecurity.isOwnerOrAdmin(#id, authentication)")
     @Operation(summary = "Add an unassigned player to the team squad")
     public ResponseEntity<TeamResponse> addPlayer(@PathVariable Long id, @Valid @RequestBody AddPlayerRequest request) {
         return ResponseEntity.ok(teamService.addPlayerToSquad(id, request.playerId()));
     }
 
     @DeleteMapping("/{id}/players/{playerId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    @PreAuthorize("@teamSecurity.isOwnerOrAdmin(#id, authentication)")
     @Operation(summary = "Remove a player from the team squad")
     public ResponseEntity<TeamResponse> removePlayer(@PathVariable Long id, @PathVariable Long playerId) {
         return ResponseEntity.ok(teamService.removePlayerFromSquad(id, playerId));
     }
 
     @PutMapping("/{id}/leadership")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ORGANIZER')")
+    @PreAuthorize("@teamSecurity.isOwnerOrAdmin(#id, authentication)")
     @Operation(summary = "Assign or clear captain and vice-captain")
     public ResponseEntity<TeamResponse> setLeadership(@PathVariable Long id, @RequestBody LeadershipRequest request) {
         return ResponseEntity.ok(teamService.setLeadership(id, request));
