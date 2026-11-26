@@ -5,5 +5,10 @@ public record TeamSummaryResponse(
         String name,
         String logoUrl,
         String captainName,
-        int playerCount
-) {}
+        int playerCount,
+        String createdBy
+) {
+    public TeamSummaryResponse(Long id, String name, String logoUrl, String captainName, int playerCount) {
+        this(id, name, logoUrl, captainName, playerCount, null);
+    }
+}

@@ -2,13 +2,31 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
-// Create Axios client with default headers (including dev role for protected endpoints)
+import { supabase } from '@/lib/supabase/client';
+
+// Create Axios client
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    'X-Dev-Role': 'ADMIN', // Dev role header for mutations
   },
+});
+
+// Attach Supabase access token dynamically, or fallback to dev role for local testing
+apiClient.interceptors.request.use(async (config) => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      config.headers.Authorization = `Bearer ${session.access_token}`;
+    } else if (process.env.NODE_ENV === 'development') {
+      config.headers['X-Dev-Role'] = 'ADMIN';
+    }
+  } catch {
+    if (process.env.NODE_ENV === 'development') {
+      config.headers['X-Dev-Role'] = 'ADMIN';
+    }
+  }
+  return config;
 });
 
 export type PlayerRole = 'BATSMAN' | 'BOWLER' | 'ALL_ROUNDER' | 'WICKET_KEEPER';
@@ -26,6 +44,7 @@ export interface TeamSummaryResponse {
   logoUrl: string | null;
   captainName: string | null;
   playerCount: number;
+  createdBy?: string | null;
 }
 
 export interface TeamResponse {
@@ -35,6 +54,7 @@ export interface TeamResponse {
   captainId: number | null;
   viceCaptainId: number | null;
   players: PlayerResponse[];
+  createdBy?: string | null;
 }
 
 export interface TeamRequest {

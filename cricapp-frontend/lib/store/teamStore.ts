@@ -33,6 +33,7 @@ function mapBackendTeamToStoreTeam(backendTeam: TeamResponse): Team {
     id: backendTeam.id,
     name: backendTeam.name,
     logoUrl: getLogoUrl(backendTeam.logoUrl) || undefined,
+    createdBy: backendTeam.createdBy || undefined,
     players: (backendTeam.players || []).map((p) => {
       let role: Role = "PLAYER";
       if (backendTeam.captainId === p.id) {

@@ -11,6 +11,9 @@ import com.crickapp.backend.repository.TeamRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
@@ -53,7 +56,8 @@ public class TeamService {
                         t.getName(),
                         t.getLogoUrl(),
                         t.getCaptain() != null ? t.getCaptain().getName() : null,
-                        t.getPlayers() != null ? t.getPlayers().size() : 0
+                        t.getPlayers() != null ? t.getPlayers().size() : 0,
+                        t.getCreatedBy()
                 ))
                 .toList();
     }
@@ -95,6 +99,7 @@ public class TeamService {
                 .name(trimmedName)
                 .logoUrl(logoUrl)
                 .players(new ArrayList<>())
+                .createdBy(getCurrentUserIdentifier())
                 .build();
 
         Team saved = teamRepository.save(team);
@@ -338,7 +343,21 @@ public class TeamService {
                 team.getLogoUrl(),
                 team.getCaptain() != null ? team.getCaptain().getId() : null,
                 team.getViceCaptain() != null ? team.getViceCaptain().getId() : null,
-                playerResponses
+                playerResponses,
+                team.getCreatedBy()
         );
+    }
+    private String getCurrentUserIdentifier() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+            String sub = jwtAuth.getToken().getSubject();
+            if (StringUtils.hasText(sub)) {
+                return sub;
+            }
+        }
+        return authentication.getName();
     }
 }

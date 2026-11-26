@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronDown, Search, Trophy, UserPlus, Users as UsersIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GlobalAddPlayerDialog } from '@/components/teams/GlobalAddPlayerDialog';
+import { UserMenu } from '@/components/auth/UserMenu';
 
 export function Navbar() {
   const [isAddOnsOpen, setIsAddOnsOpen] = useState(false);
@@ -111,7 +112,7 @@ export function Navbar() {
             </Link>
           </div>
 
-          <Button variant="outline" className="text-teal-600 border-teal-600 hover:bg-teal-50 hover:text-teal-700 bg-transparent rounded-lg px-6 font-semibold">Sign in</Button>
+          <UserMenu />
 
           <button className="text-teal-600 hover:text-teal-700 ml-2">
             <Search className="h-6 w-6" />

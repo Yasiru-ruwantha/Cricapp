@@ -19,9 +19,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    private final SupabaseJwtAuthenticationConverter jwtAuthenticationConverter;
     private final DevRoleFilter devRoleFilter;
 
-    public SecurityConfig(@Autowired(required = false) DevRoleFilter devRoleFilter) {
+    public SecurityConfig(
+            SupabaseJwtAuthenticationConverter jwtAuthenticationConverter,
+            @Autowired(required = false) DevRoleFilter devRoleFilter
+    ) {
+        this.jwtAuthenticationConverter = jwtAuthenticationConverter;
         this.devRoleFilter = devRoleFilter;
     }
 
@@ -53,6 +58,9 @@ public class SecurityConfig {
                         .requestMatchers("/ws/**").permitAll()
                         // All other endpoints require authentication
                         .anyRequest().authenticated()
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
                 );
 
         if (devRoleFilter != null) {
